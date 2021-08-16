@@ -123,6 +123,7 @@ public class Repository {
     }
 
     public String listFilesFromCWD(){
+        this.checkRepoExists();
         StringBuilder sb = new StringBuilder();
         List<String> files = Utils.plainFilenamesIn(CWD);
         files.forEach((entry) -> sb.append(entry).append("\n"));
@@ -131,12 +132,13 @@ public class Repository {
 
     public String listFilesFromIndex() {
         this.checkRepoExists();
-        HashMap<File, String> filesInIndex = Utils.readObject(INDEX_FILE, HashMap.class);
         StringBuilder sb = new StringBuilder();
-        filesInIndex.entrySet().forEach(entry -> {
-            sb.append(entry.getValue() + "     " + entry.getKey() + "\n");
-        });
-
+        if (INDEX_FILE.exists()) {
+            HashMap<File, String> filesInIndex = Utils.readObject(INDEX_FILE, HashMap.class);
+            filesInIndex.entrySet().forEach(entry -> {
+                sb.append(entry.getValue() + "     " + entry.getKey() + "\n");
+            });
+        }
         return sb.length() == 0 ? null : sb.toString();
     }
 
