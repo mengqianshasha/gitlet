@@ -50,6 +50,7 @@ public class Gitlet {
                 break;
             case "ls-tree":
                 cmd = new ListTreeCommand(new Repository());
+                break;
             case "cat-file":
                 cmd = new CatFileCommand(new Repository());
                 break;

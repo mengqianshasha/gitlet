@@ -119,25 +119,29 @@ public class Repository {
             diffFiles.findDiffFiles(indexFiles, parentCommitFiles);
 
             // Step2: update new commit according to the result of comparing
-            String parentCommitTreeHash = parentCommit.getTree();
-            HashMap<String, TreeNode> parentCommitTree = (HashMap<String, TreeNode>)this.readObject(parentCommitTreeHash);
+            HashMap<String, TreeNode> parentCommitTree = this.getCommitTreeFromCommit(parentCommit);
             if (!diffFiles.getOrphanFiles1().isEmpty()) {       // file in index, not in commit, then insert
                 for (String filePath : diffFiles.getOrphanFiles1()) {
-                    String[] path = Utils.splitPath(filePath);
-                    HashMap<String, TreeNode> parentCommitCurr = parentCommitTree;
-                    for (int i = 0; i < path.length; i++) {
-                        if (i < path.length - 1) {
-
-                        }
-                    }
+                    this.insertToCommitTree(filePath, indexFiles.get(filePath), parentCommitTree);
                 }
             }
             if (!diffFiles.getOrphanFiles2().isEmpty()) {       // file in commit, not in index, then remove
-
+                for (String filePath : diffFiles.getOrphanFiles2()) {
+                    this.removeFromCommitTree(filePath, parentCommitTree);
+                }
             }
             if (!diffFiles.getModifiedFiles().isEmpty()) {      // file different versions, then update in commit
-
+                for (String filePath : diffFiles.getModifiedFiles()) {
+                    this.updateCommitTree(filePath, indexFiles.get(filePath), parentCommitTree);
+                }
             }
+
+            // Step3: Construct new commit
+            String treeHash = this.hashObject(ObjectType.tree, parentCommitTree);
+            commit = new Commit(comment, Instant.now().toString(), parentHash, treeHash, this.getAuthor());
+
+            String head = Utils.readContentsAsString(HEAD_FILE).trim();
+            file = Utils.join(GITLET_DIR, head);
         }
 
         String commitHash = this.hashObject(ObjectType.commit, commit);
@@ -146,6 +150,19 @@ public class Repository {
         return null;
     }
 
+    private void removeFromCommitTree(String filePath, HashMap<String, TreeNode> commitTree) {
+        commitTree.remove(filePath);
+    }
+
+    private void insertToCommitTree(String filePath, String fileHash, HashMap<String, TreeNode> commitTree) {
+        TreeNode treeNode = new TreeNode(TreeNodeType.blob, fileHash, filePath);
+        commitTree.put(filePath, treeNode);
+    }
+
+    private void updateCommitTree(String filePath, String fileHash, HashMap<String, TreeNode> commitTree) {
+        TreeNode treeNode = new TreeNode(TreeNodeType.blob, fileHash, filePath);
+        commitTree.put(filePath, treeNode);
+    }
     public String listFilesFromIndex() {
         this.checkRepoExists();
         StringBuilder sb = new StringBuilder();
@@ -168,7 +185,12 @@ public class Repository {
 
         HashMap<String, TreeNode> result = null;
         if (object instanceof Commit){
-            result = (HashMap<String, TreeNode>)this.readObject(((Commit)object).getTree());
+            String tree = ((Commit)object).getTree();
+            if (tree == null){
+                throw new GitletException("fatal: not a tree object");
+            }
+
+            result = (HashMap<String, TreeNode>)this.readObject(tree);
         }else{
             result = (HashMap<String, TreeNode>)object;
         }
@@ -264,12 +286,22 @@ public class Repository {
         return objectHash;
     }
 
+    private HashMap<String, TreeNode> getCommitTreeFromCommit(Commit commit){
+        String treeHash = commit.getTree();
+        if (treeHash == null) {
+            return new HashMap<String, TreeNode>();
+        }
+
+        return (HashMap<String, TreeNode>)this.readObject(treeHash);
+    }
+
     private HashMap<String, String> flattenCommitTree(Commit commit) {
         String treeHash = commit.getTree();
         HashMap<String, String> result = new HashMap<String, String>();
         if (treeHash == null) {
             return result;
         }
+
         HashMap<String, TreeNode> files = (HashMap<String, TreeNode>)this.readObject(treeHash);
 
         Queue<TreeNode> queue = new LinkedList<>();

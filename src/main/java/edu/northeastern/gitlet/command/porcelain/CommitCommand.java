@@ -11,7 +11,7 @@ public class CommitCommand extends GitletCommand {
 
     @Override
     protected String doExecute(String[] operands) {
-        return null;
+        return this.getRepo().commit(operands[0]);
     }
 
     @Override
