@@ -134,6 +134,37 @@ public class Repository {
         return null;
     }
 
+    public String log() {
+        this.checkRepoExists();
+        String commitHash = this.parseReference("HEAD");
+        StringBuilder sb = new StringBuilder();
+        while (commitHash != null) {
+            Commit commit = (Commit)this.readObject(commitHash);
+            sb.append("===\n");
+            sb.append("commit ");
+            sb.append(commitHash + "\n");
+            sb.append("Date: " + commit.getTimestamp() + "\n");
+            sb.append(commit.getMessage() + "\n\n");
+            commitHash = commit.getParent();
+        }
+        return sb.toString();
+    }
+
+    public String branch(String branchName) {
+        this.checkRepoExists();
+        File branchFile = Utils.join(REFS_HEADS_DIR, branchName);
+        if (branchFile.exists()) {
+            throw new GitletException("A branch with that name already exists.");
+        }
+        try {
+            branchFile.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Utils.writeContents(branchFile, this.parseReference("HEAD") + "\n");
+        return null;
+    }
+
     private void removeFromCommitTree(String filePath, HashMap<String, TreeNode> commitTree) {
         commitTree.remove(filePath);
     }

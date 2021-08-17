@@ -10,7 +10,7 @@ public class LogCommand extends GitletCommand {
 
     @Override
     protected String doExecute(String[] operands) {
-        return null;
+        return this.getRepo().log();
     }
 
     @Override

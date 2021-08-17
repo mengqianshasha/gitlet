@@ -10,7 +10,7 @@ public class BranchCommand extends GitletCommand {
 
     @Override
     protected String doExecute(String[] operands) {
-        return null;
+        return this.getRepo().branch(operands[0]);
     }
 
     @Override
