@@ -122,6 +122,29 @@ public class Repository {
             // Step1: compare index and most recent commit
             HashMap<String, String> parentCommitFiles = this.flattenCommitTree(parentCommit);
             HashMap<String, String> indexFiles = this.readIndex();
+            DiffFiles diffFiles = new DiffFiles();
+            diffFiles.findDiffFiles(indexFiles, parentCommitFiles);
+
+            // Step2: update new commit according to the result of comparing
+            String parentCommitTreeHash = parentCommit.getTree();
+            HashMap<String, TreeNode> parentCommitTree = (HashMap<String, TreeNode>)this.readObject(parentCommitTreeHash);
+            if (!diffFiles.getOrphanFiles1().isEmpty()) {       // file in index, not in commit, then insert
+                for (String filePath : diffFiles.getOrphanFiles1()) {
+                    String[] path = Utils.splitPath(filePath);
+                    HashMap<String, TreeNode> parentCommitCurr = parentCommitTree;
+                    for (int i = 0; i < path.length; i++) {
+                        if (i < path.length - 1) {
+
+                        }
+                    }
+                }
+            }
+            if (!diffFiles.getOrphanFiles2().isEmpty()) {       // file in commit, not in index, then remove
+
+            }
+            if (!diffFiles.getModifiedFiles().isEmpty()) {      // file different versions, then update in commit
+
+            }
         }
 
         String commitHash = this.hashObject(ObjectType.commit, commit);
@@ -240,29 +263,6 @@ public class Repository {
         return objectHash;
     }
 
-    private DiffFiles compareTwoAreas(HashMap<String, String> Area1, HashMap<String, String> Area2) {
-        DiffFiles diffFiles = new DiffFiles();
-        for (String filePath : indexFiles.keySet()) {
-            // file in both index and commit
-            if (parentCommitFiles.containsKey(filePath)) {
-                if (parentCommitFiles.get(filePath).equals(indexFiles.get(filePath))) {
-                    diffFiles.addToModifyList(filePath, indexFiles.get(filePath));
-                }
-            }
-            // file only in index
-            else {
-                diffFiles.addToAddList(filePath, indexFiles.get(filePath));
-            }
-        }
-        for (String filePath : parentCommitFiles.keySet()) {
-            // file only in most recent commit
-            if (!indexFiles.containsKey(filePath)) {
-                diffFiles.addToRemoveList(filePath, parentCommitFiles.get(filePath));
-            }
-        }
-
-    }
-
     private HashMap<String, String> flattenCommitTree(Commit commit) {
         String treeHash = commit.getTree();
         HashMap<String, String> result = new HashMap<String, String>();
@@ -273,7 +273,6 @@ public class Repository {
 
         Queue<TreeNode> queue = new LinkedList<>();
         for (TreeNode treeNode: files.values()) {
-            treeNode.setFileName(Utils.join(CWD, treeNode.getFileName()).getAbsolutePath());
             queue.add(treeNode);
         }
 
@@ -284,7 +283,7 @@ public class Repository {
             } else {
                 HashMap<String, TreeNode> subFiles = (HashMap<String, TreeNode>)this.readObject(treeNode.getHash());
                 for (TreeNode subTreeNode: subFiles.values()) {
-                    subTreeNode.setFileName(Utils.join(treeNode.getFileName(), subTreeNode.getFileName()).getAbsolutePath());
+                    subTreeNode.setFileName(Utils.join(treeNode.getFileName(), subTreeNode.getFileName()).getPath());
                     queue.add(subTreeNode);
                 }
             }

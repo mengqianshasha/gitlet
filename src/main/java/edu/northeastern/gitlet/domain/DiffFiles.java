@@ -1,39 +1,49 @@
 package edu.northeastern.gitlet.domain;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class DiffFiles {
-    private HashMap<String, String> toAddList;
-    private HashMap<String, String> toRemoveList;
-    private HashMap<String, String> toModifyList;
+    private HashSet<String> orphanFiles1;
+    private HashSet<String> orphanFiles2;
+    private HashSet<String> modifiedFiles;
 
     public DiffFiles() {
-        toAddList = new HashMap<String, String>();
-        toRemoveList = new HashMap<String, String>();
-        toModifyList = new HashMap<String, String>();
+        orphanFiles1 = new HashSet<String>();
+        orphanFiles2 = new HashSet<String>();
+        modifiedFiles = new HashSet<String>();
     }
 
-    public HashMap<String, String> getToAddList() {
-        return toAddList;
+    public void findDiffFiles(HashMap<String, String> area1, HashMap<String, String> area2) {
+        for (String filePath : area1.keySet()) {
+            // file in both area1 and area2
+            if (area2.containsKey(filePath)) {
+                if (!area1.get(filePath).equals(area2.get(filePath))) {
+                    this.modifiedFiles.add(filePath);
+                }
+            }
+            // file only in area1
+            else {
+                this.orphanFiles1.add(filePath);
+            }
+        }
+        for (String filePath : area2.keySet()) {
+            // file only in area2
+            if (!area1.containsKey(filePath)) {
+                this.orphanFiles2.add(filePath);
+            }
+        }
     }
 
-    public HashMap<String, String> getToRemoveList() {
-        return toRemoveList;
+    public HashSet<String> getOrphanFiles1() {
+        return this.orphanFiles1;
     }
 
-    public HashMap<String, String> getToModifyList() {
-        return toModifyList;
+    public HashSet<String> getOrphanFiles2() {
+        return this.orphanFiles2;
     }
 
-    public void addToAddList(String filePath, String fileHash) {
-        this.toAddList.put(filePath, fileHash);
-    }
-
-    public void addToRemoveList(String filePath, String fileHash) {
-        this.toRemoveList.put(filePath, fileHash);
-    }
-
-    public void addToModifyList(String filePath, String fileHash) {
-        this.toModifyList.put(filePath, fileHash);
+    public HashSet<String> getModifiedFiles() {
+        return this.modifiedFiles;
     }
 }

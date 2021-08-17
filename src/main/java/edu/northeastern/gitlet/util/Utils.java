@@ -234,4 +234,8 @@ public class Utils {
             throw GitletException.error("Internal error serializing commit.");
         }
     }
+
+    public static String[] splitPath(String filePath) {
+        return null;
+    }
 }
