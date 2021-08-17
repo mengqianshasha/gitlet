@@ -67,6 +67,8 @@ public class Repository {
 
         File defaultBranchFile = Utils.join(REFS_HEADS_DIR, this.getProperty("init.defaultBranch"));
         if (!defaultBranchFile.exists()) {
+
+            // init commit
             commit = new Commit(
                     comment,
                     Instant.EPOCH.toString(),
@@ -74,9 +76,14 @@ public class Repository {
                     null,
                     this.getAuthor());
             file = defaultBranchFile;
+
         } else {
+            // commit for staging area
             String head = Utils.readContentsAsString(HEAD_FILE).split(": ")[1].trim();
             file = Utils.join(GITLET_DIR, head);
+            String parentHash = Utils.readContentsAsString(file);
+
+
         }
 
         String commitHash = this.hashObject(ObjectType.commit, commit);
@@ -84,6 +91,8 @@ public class Repository {
 
         return null;
     }
+
+
 
     public String config(File file, String propertyName, String propertyValue){
         Properties properties = new Properties();
@@ -170,6 +179,28 @@ public class Repository {
                     return sb.toString();
                 case tree:
                     return null;
+            }
+        }
+
+        return null;
+    }
+
+    private Object readObject(String hash) {
+        this.checkRepoExists();
+        File file = Utils.join(OBJECTS_DIR, hash.substring(0, 2), hash.substring(2));
+        if (file.exists()) {
+            String[] parts = Utils.readContentsAsString(file).split("\u0000");
+            ObjectType objectType = ObjectType.valueOf(parts[0].split(" ")[0]);
+
+            switch (objectType){
+                case blob:
+                    return parts[1];
+                case commit:
+                    Commit commit = Utils.deserialize(parts[1], Commit.class);
+                    return commit;
+                case tree:
+                    Tree tree = Utils.deserialize(parts[1], Tree.class);
+                    return tree;
             }
         }
 

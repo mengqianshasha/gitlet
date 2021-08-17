@@ -1,6 +1,8 @@
 package edu.northeastern.gitlet.domain;
 
-public enum TreeNodeType {
+import java.io.Serializable;
+
+public enum TreeNodeType implements Serializable {
     blob,
     tree
 }

@@ -1,6 +1,8 @@
 package edu.northeastern.gitlet.domain;
 
-public class TreeNode {
+import java.io.Serializable;
+
+public class TreeNode implements Serializable {
     private TreeNodeType nodeType;
     private String hash;
     private String fileName;

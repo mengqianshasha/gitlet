@@ -32,7 +32,7 @@ public abstract class GitletCommand {
      * print the message "Incorrect operands." and exit.
      * @param args The arguments provided by the user in the command line
      */
-    private void validateNumOperands(String[] args) {
+    protected void validateNumOperands(String[] args) {
         if (args.length > this.maxNumOfOperands || args.length < this.minNumOfOperands) {
             System.out.println("Incorrect operands.");
             System.exit(0);
