@@ -2,12 +2,13 @@ package edu.northeastern.gitlet.domain;
 
 import edu.northeastern.gitlet.exception.GitletException;
 import edu.northeastern.gitlet.util.Utils;
+import jdk.internal.org.jline.utils.DiffHelper;
 
+import java.awt.*;
 import java.io.*;
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
 
 // TODO: any imports you need here
 
@@ -82,6 +83,13 @@ public class Repository {
             String head = Utils.readContentsAsString(HEAD_FILE).split(": ")[1].trim();
             file = Utils.join(GITLET_DIR, head);
             String parentHash = Utils.readContentsAsString(file);
+            Commit parentCommit = (Commit)this.readObject(parentHash);
+
+            // Step1: compare index and most recent commit
+            HashMap<String, String> parentCommitFiles = this.flattenCommitTree(parentCommit);
+            HashMap<String, String> indexFiles = Utils.readObject(INDEX_FILE, HashMap.class);
+
+
 
 
         }
@@ -92,7 +100,55 @@ public class Repository {
         return null;
     }
 
+    private DiffFiles compareTwoAreas(HashMap<String, String> Area1, HashMap<String, String> Area2) {
+        DiffFiles diffFiles = new DiffFiles();
+        for (String filePath : indexFiles.keySet()) {
+            // file in both index and commit
+            if (parentCommitFiles.containsKey(filePath)) {
+                if (parentCommitFiles.get(filePath).equals(indexFiles.get(filePath))) {
+                    diffFiles.addToModifyList(filePath, indexFiles.get(filePath));
+                }
+            }
+            // file only in index
+            else {
+                diffFiles.addToAddList(filePath, indexFiles.get(filePath));
+            }
+        }
+        for (String filePath : parentCommitFiles.keySet()) {
+            // file only in most recent commit
+            if (!indexFiles.containsKey(filePath)) {
+                diffFiles.addToRemoveList(filePath, parentCommitFiles.get(filePath));
+            }
+        }
 
+    }
+    private HashMap<String, String> flattenCommitTree(Commit commit) {
+        String treeHash = commit.getTree();
+        HashMap<String, String> result = new HashMap<String, String>();
+        if (treeHash == null) {
+            return result;
+        }
+        HashMap<String, TreeNode> files = (HashMap<String, TreeNode>)this.readObject(treeHash);
+
+        Queue<TreeNode> queue = new LinkedList<TreeNode>();
+        for (TreeNode treeNode: files.values()) {
+            treeNode.setFileName(Utils.join(CWD, treeNode.getFileName()).getAbsolutePath());
+            queue.add(treeNode);
+        }
+        while (!queue.isEmpty()) {
+            TreeNode treeNode = queue.poll();
+            if (treeNode.getNodeType() == TreeNodeType.blob) {
+                result.put(treeNode.getFileName(), treeNode.getHash());
+            } else {
+                HashMap<String, TreeNode> subFiles = (HashMap<String, TreeNode>)this.readObject(treeNode.getHash());
+                for (TreeNode subTreeNode: subFiles.values()) {
+                    subTreeNode.setFileName(Utils.join(treeNode.getFileName(), subTreeNode.getFileName()).getAbsolutePath());
+                    queue.add(subTreeNode);
+                }
+            }
+        }
+        return result;
+    }
 
     public String config(File file, String propertyName, String propertyValue){
         Properties properties = new Properties();
@@ -115,16 +171,16 @@ public class Repository {
         return sb.length() == 0 ? null : sb.toString();
     }
 
-    public String add(String fileName) {
+    public String add(String filePath) {
         this.checkRepoExists();
         HashMap<String, String> filesInIndex = this.getHashMapFromIndex();
 
-        File file = Utils.join(CWD, fileName);
+        File file = Utils.join(CWD, filePath);
         if (file.exists()) {
-            filesInIndex.put(fileName, this.hashObject(ObjectType.blob, Utils.readContentsAsString(file)));
+            filesInIndex.put(filePath, this.hashObject(ObjectType.blob, Utils.readContentsAsString(file)));
 
-        } else if (filesInIndex.containsKey(fileName)){
-            filesInIndex.remove(fileName);
+        } else if (filesInIndex.containsKey(filePath)){
+            filesInIndex.remove(filePath);
         }
 
         Utils.writeObject(INDEX_FILE, filesInIndex);
@@ -143,7 +199,7 @@ public class Repository {
         this.checkRepoExists();
         StringBuilder sb = new StringBuilder();
         if (INDEX_FILE.exists()) {
-            HashMap<File, String> filesInIndex = Utils.readObject(INDEX_FILE, HashMap.class);
+            HashMap<String, String> filesInIndex = Utils.readObject(INDEX_FILE, HashMap.class);
             filesInIndex.entrySet().forEach(entry -> {
                 sb.append(entry.getValue() + "     " + entry.getKey() + "\n");
             });
@@ -199,7 +255,7 @@ public class Repository {
                     Commit commit = Utils.deserialize(parts[1], Commit.class);
                     return commit;
                 case tree:
-                    Tree tree = Utils.deserialize(parts[1], Tree.class);
+                    HashMap<String, TreeNode> tree = Utils.deserialize(parts[1], HashMap.class);
                     return tree;
             }
         }

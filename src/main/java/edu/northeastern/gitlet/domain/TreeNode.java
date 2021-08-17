@@ -12,4 +12,20 @@ public class TreeNode implements Serializable {
         this.hash = hash;
         this.fileName = fileName;
     }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public TreeNodeType getNodeType() {
+        return nodeType;
+    }
+
+    public String getHash() {
+        return hash;
+    }
 }
