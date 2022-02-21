@@ -105,21 +105,10 @@ public class Repository {
             // Step2: update new commit according to the result of comparing
             HashMap<String, TreeNode> parentCommitTree = this.getCommitTreeFromCommit(parentCommit);
 
-            if (!diffFiles.getOrphanFiles1().isEmpty()) {       // file in index, not in commit, then insert
-                for (String filePath : diffFiles.getOrphanFiles1()) {
-                    this.insertToCommitTree(filePath, indexFiles.get(filePath), parentCommitTree);
-                }
-            }
-            if (!diffFiles.getOrphanFiles2().isEmpty()) {       // file in commit, not in index, then remove
-                for (String filePath : diffFiles.getOrphanFiles2()) {
-                    this.removeFromCommitTree(filePath, parentCommitTree);
-                }
-            }
-            if (!diffFiles.getModifiedFiles().isEmpty()) {      // file different versions, then update in commit
-                for (String filePath : diffFiles.getModifiedFiles()) {
-                    this.updateCommitTree(filePath, indexFiles.get(filePath), parentCommitTree);
-                }
-            }
+            diffFiles.applyDiff(
+                    (filePath) -> this.insertToCommitTree(filePath, indexFiles.get(filePath), parentCommitTree),
+                    (filePath) -> this.removeFromCommitTree(filePath, parentCommitTree),
+                    (filePath) -> this.updateCommitTree(filePath, indexFiles.get(filePath), parentCommitTree));
 
             // Step3: Construct new commit
             String treeHash = this.hashObject(ObjectType.tree, parentCommitTree);
@@ -136,10 +125,10 @@ public class Repository {
 
     public String log() {
         this.checkRepoExists();
-        String commitHash = this.parseReference("HEAD");
+        String commitHash = this.referenceStore.parseHeadReference();
         StringBuilder sb = new StringBuilder();
         while (commitHash != null) {
-            Commit commit = (Commit)this.readObject(commitHash);
+            Commit commit = (Commit)this.objectStore.readObject(commitHash);
             sb.append("===\n");
             sb.append("commit ");
             sb.append(commitHash + "\n");
@@ -152,7 +141,7 @@ public class Repository {
 
     public String branch(String branchName) {
         this.checkRepoExists();
-        File branchFile = Utils.join(REFS_HEADS_DIR, branchName);
+        File branchFile = this.referenceStore.getBranchFile(branchName);
         if (branchFile.exists()) {
             throw new GitletException("A branch with that name already exists.");
         }
@@ -161,23 +150,10 @@ public class Repository {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Utils.writeContents(branchFile, this.parseReference("HEAD") + "\n");
+        Utils.writeContents(branchFile, this.referenceStore.parseHeadReference() + "\n");
         return null;
     }
 
-    private void removeFromCommitTree(String filePath, HashMap<String, TreeNode> commitTree) {
-        commitTree.remove(filePath);
-    }
-
-    private void insertToCommitTree(String filePath, String fileHash, HashMap<String, TreeNode> commitTree) {
-        TreeNode treeNode = new TreeNode(TreeNodeType.blob, fileHash, filePath);
-        commitTree.put(filePath, treeNode);
-    }
-
-    private void updateCommitTree(String filePath, String fileHash, HashMap<String, TreeNode> commitTree) {
-        TreeNode treeNode = new TreeNode(TreeNodeType.blob, fileHash, filePath);
-        commitTree.put(filePath, treeNode);
-    }
     public String listFilesFromIndex() {
         this.checkRepoExists();
         StringBuilder sb = new StringBuilder();
@@ -280,6 +256,20 @@ public class Repository {
         }
 
         return object;
+    }
+
+    private void removeFromCommitTree(String filePath, HashMap<String, TreeNode> commitTree) {
+        commitTree.remove(filePath);
+    }
+
+    private void insertToCommitTree(String filePath, String fileHash, HashMap<String, TreeNode> commitTree) {
+        TreeNode treeNode = new TreeNode(TreeNodeType.blob, fileHash, filePath);
+        commitTree.put(filePath, treeNode);
+    }
+
+    private void updateCommitTree(String filePath, String fileHash, HashMap<String, TreeNode> commitTree) {
+        TreeNode treeNode = new TreeNode(TreeNodeType.blob, fileHash, filePath);
+        commitTree.put(filePath, treeNode);
     }
 
     private HashMap<String, TreeNode> getCommitTreeFromCommit(Commit commit){
