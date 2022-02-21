@@ -235,7 +235,7 @@ public class Utils {
         }
     }
 
-    public static String[] splitPath(String filePath) {
-        return null;
+    public static String[] splitPath(String filePath){
+        return filePath.split(File.separator);
     }
 }

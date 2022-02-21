@@ -2,43 +2,38 @@ package edu.northeastern.gitlet.domain;
 
 import edu.northeastern.gitlet.exception.GitletException;
 import edu.northeastern.gitlet.util.Utils;
-import jdk.internal.org.jline.utils.DiffHelper;
 
 import java.io.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
 
-// TODO: any imports you need here
-
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  *  @author TODO
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
      */
 
-    /** The current working directory. */
     private static final File CWD = new File(System.getProperty("user.dir"));
-    /** The .gitlet directory. */
+
     private static final File GITLET_DIR = Utils.join(CWD, ".gitlet");
-    /** The objects directory. */
+
     private static final File OBJECTS_DIR = Utils.join(GITLET_DIR, "objects");
-    /** The refs directory. */
+
     private static final File REFS_HEADS_DIR = Utils.join(GITLET_DIR, "refs", "heads");
-    /** The HEAD file. */
+
     private static final File HEAD_FILE = Utils.join(GITLET_DIR, "HEAD");
-    /** The index file. */
+
     private static final File INDEX_FILE = Utils.join(GITLET_DIR, "index");
-    /** The config file */
+
+    private static final String HEAD = "HEAD";
+
     public static final File CONFIG_FILE = Utils.join(GITLET_DIR, "config");
 
     public static final File GLOBAL_CONFIG_FILE = Utils.join(
@@ -51,7 +46,7 @@ public class Repository {
         GITLET_DIR.mkdir();
         OBJECTS_DIR.mkdir();
         REFS_HEADS_DIR.mkdirs();
-        Utils.writeContents(HEAD_FILE, "ref: refs/heads/" + this.getConfigValue("init.defaultBranch") + "\n");
+        Utils.writeContents(HEAD_FILE, "refs/heads/" + this.getConfigValue("init.defaultBranch") + "\n");
         try {
             CONFIG_FILE.createNewFile();
         } catch (IOException e) {
@@ -114,9 +109,7 @@ public class Repository {
 
         } else {
             // commit for staging area
-            String head = Utils.readContentsAsString(HEAD_FILE).split(": ")[1].trim();
-            file = Utils.join(GITLET_DIR, head);
-            String parentHash = Utils.readContentsAsString(file);
+            String parentHash = this.parseReference(HEAD);
             Commit parentCommit = (Commit)this.readObject(parentHash);
 
             // Step1: compare index and most recent commit
@@ -153,14 +146,6 @@ public class Repository {
         return null;
     }
 
-    public String listFilesFromCWD(){
-        this.checkRepoExists();
-        StringBuilder sb = new StringBuilder();
-        List<String> files = Utils.plainFilenamesIn(CWD);
-        files.forEach((entry) -> sb.append(entry).append("\n"));
-        return sb.toString();
-    }
-
     public String listFilesFromIndex() {
         this.checkRepoExists();
         StringBuilder sb = new StringBuilder();
@@ -195,6 +180,22 @@ public class Repository {
         });
 
         return sb.toString();
+    }
+
+    public String parseReference(String name){
+        this.checkRepoExists();
+        File file = null;
+        if (name.equalsIgnoreCase(HEAD)){
+            String head = Utils.readContentsAsString(HEAD_FILE).trim();
+            file = Utils.join(GITLET_DIR, head);
+        }else{
+            file = Utils.join(REFS_HEADS_DIR, name);
+            if (!file.exists()){
+                throw new GitletException("fatal: Not a valid object name" + name);
+            }
+        }
+
+        return Utils.readContentsAsString(file).trim();
     }
 
     public String readFile(String hash) {

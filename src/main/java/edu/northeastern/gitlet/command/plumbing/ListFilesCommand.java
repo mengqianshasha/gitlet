@@ -7,15 +7,11 @@ import edu.northeastern.gitlet.exception.GitletException;
 public class ListFilesCommand extends GitletCommand {
 
     public ListFilesCommand(Repository repo) {
-        super(repo, 0, 1);
+        super(repo, 1, 1);
     }
 
     @Override
     protected String doExecute(String[] operands) {
-        if (operands.length == 0) {
-           return this.getRepo().listFilesFromCWD();
-        }
-
         if (operands[0].equals("-s")) {
             return this.getRepo().listFilesFromIndex();
         }

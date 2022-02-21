@@ -1,10 +1,7 @@
 package edu.northeastern.gitlet;
 
 import edu.northeastern.gitlet.command.*;
-import edu.northeastern.gitlet.command.plumbing.CatFileCommand;
-import edu.northeastern.gitlet.command.plumbing.HashObjectCommand;
-import edu.northeastern.gitlet.command.plumbing.ListFilesCommand;
-import edu.northeastern.gitlet.command.plumbing.ListTreeCommand;
+import edu.northeastern.gitlet.command.plumbing.*;
 import edu.northeastern.gitlet.command.porcelain.*;
 import edu.northeastern.gitlet.domain.Repository;
 import edu.northeastern.gitlet.exception.GitletException;
@@ -58,6 +55,9 @@ public class Gitlet {
                 break;
             case "hash-object":
                 cmd = new HashObjectCommand(new Repository());
+                break;
+            case "rev-parse":
+                cmd = new RevParseCommand(new Repository());
                 break;
             case "add":
                 cmd = new AddCommand(new Repository());
