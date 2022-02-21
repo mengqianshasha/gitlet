@@ -2,17 +2,19 @@ package edu.northeastern.gitlet.domain;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 
 public class DiffFiles {
-    private HashSet<String> orphanFiles1;
-    private HashSet<String> orphanFiles2;
-    private HashSet<String> modifiedFiles;
+    private TreeSet<String> orphanFiles1;
+    private TreeSet<String> orphanFiles2;
+    private TreeSet<String> modifiedFiles;
 
     public DiffFiles() {
-        orphanFiles1 = new HashSet<String>();
-        orphanFiles2 = new HashSet<String>();
-        modifiedFiles = new HashSet<String>();
+        orphanFiles1 = new TreeSet<String>();
+        orphanFiles2 = new TreeSet<String>();
+        modifiedFiles = new TreeSet<String>();
     }
 
     public void findDiffFiles(HashMap<String, String> area1, HashMap<String, String> area2) {

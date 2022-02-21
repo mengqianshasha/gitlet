@@ -1,6 +1,7 @@
 package edu.northeastern.gitlet.command;
 
 import edu.northeastern.gitlet.domain.Repository;
+import edu.northeastern.gitlet.exception.GitletException;
 
 public abstract class GitletCommand {
     private Repository repo;
@@ -34,8 +35,7 @@ public abstract class GitletCommand {
      */
     protected void validateNumOperands(String[] args) {
         if (args.length > this.maxNumOfOperands || args.length < this.minNumOfOperands) {
-            System.out.println("Incorrect operands.");
-            System.exit(0);
+            throw new GitletException("Incorrect operands.");
         }
     }
 }

@@ -203,6 +203,153 @@ public class Repository {
         return null;
     }
 
+    public String status() {
+        this.checkRepoExists();
+        StringBuilder sb = new StringBuilder();
+
+        // 1. All branches
+        String currBranch = this.referenceStore.getCurrentBranchName();
+        Set<String> branches = this.referenceStore.getAllBranchNames();
+        branches.remove(currBranch);
+        sb.append("=== Branches ===\n").append("*").append(currBranch).append("\n");
+        branches.forEach(branch -> sb.append(branch).append("\n"));
+        sb.append("\n");
+
+        // 2. Staged files & Removed files
+        HashMap<String, String> indexFiles = this.indexStore.readIndex();
+        String currBranchHash = this.referenceStore.parseHeadReference();
+        Commit currCommit = (Commit)this.objectStore.readObject(currBranchHash);
+        HashMap<String, String> currCommitFiles = this.flattenCommitTree(currCommit);
+
+        DiffFiles diffOfIndexAndCommit = new DiffFiles();
+        diffOfIndexAndCommit.findDiffFiles(indexFiles, currCommitFiles);
+        Set<String> stagedFiles = new TreeSet<String>();
+        Set<String> removedFiles = new TreeSet<String>();
+        diffOfIndexAndCommit.applyDiff(fileName -> stagedFiles.add(fileName),
+                fileName -> removedFiles.add(fileName),
+                fileName -> stagedFiles.add(fileName));
+        sb.append("=== Staged Files ===\n");
+        stagedFiles.forEach(fileName -> sb.append(fileName).append("\n"));
+        sb.append("\n");
+        sb.append("=== Removed Files ===\n");
+        removedFiles.forEach(fileName -> sb.append(fileName).append("\n"));
+        sb.append("\n");
+
+        // Unstaged & Untracked
+        List<String> CWDFileNames = Utils.plainFilenamesIn(CWD);
+        HashMap<String, String> CWDFiles = new HashMap<>();
+        for (String fileName : CWDFileNames) {
+            File file = Utils.join(CWD, fileName);
+            String fileHash = this.objectStore.hashObject(ObjectType.blob,
+                    Utils.readContentsAsString(file),
+                    false);
+            CWDFiles.put(fileName, fileHash);
+        }
+        DiffFiles diffOfCWDAndIndex = new DiffFiles();
+        diffOfCWDAndIndex.findDiffFiles(CWDFiles, indexFiles);
+        TreeSet<String> untracked = new TreeSet<>();
+        TreeSet<String> deleted = new TreeSet<>();
+        TreeSet<String> modified = new TreeSet<>();
+        diffOfCWDAndIndex.applyDiff(fileName -> untracked.add(fileName),
+                fileName -> deleted.add(fileName),
+                fileName -> modified.add(fileName));
+        sb.append("=== Modifications Not Staged For Commit ===\n");
+        deleted.forEach(fileName -> sb.append(fileName).append(" (deleted)\n"));
+        modified.forEach(fileName -> sb.append(fileName).append(" (modified)\n"));
+        sb.append("\n");
+        sb.append("=== Untracked Files ===\n");
+        untracked.forEach(fileName -> sb.append(fileName).append("\n"));
+        sb.append("\n");
+        return sb.toString();
+    }
+
+    public String checkoutFile(String fileName) {
+        this.checkRepoExists();
+        String commitHash = this.referenceStore.parseHeadReference();
+        return this.checkoutFileFromCommit(commitHash, fileName);
+    }
+
+    public String checkoutFileFromCommit(String commitHash, String fileName) {
+        this.checkRepoExists();
+
+        // Error1: the commit does not exist
+        Commit commit = (Commit)this.objectStore.readObject(commitHash);
+        if (commit == null) {
+            throw new GitletException("No commit with that id exists.");
+        }
+
+        // Error2: the file does not exist in the commit
+        HashMap<String, String> commitFiles = this.flattenCommitTree(commit);
+        if (!commitFiles.containsKey(fileName)) {
+            throw new GitletException("File does not exist in that commit.");
+        }
+
+        // Put the file in the head commit in the working directory
+        // Or overwrite the existing file in the working directory
+        File file = Utils.join(CWD, fileName);
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        String contentsInFile = (String)this.objectStore.readObject(commitFiles.get(fileName));
+        Utils.writeContents(file, contentsInFile);
+        return null;
+    }
+
+    public String checkoutBranch(String branchName) {
+        this.checkRepoExists();
+
+        // Error1: no need to checkout current branch
+        String currBranchName = this.referenceStore.getCurrentBranchName();
+        if (branchName.equals(currBranchName)) {
+            throw new GitletException("No need to checkout the current branch");
+        }
+
+        // Error2: no such branch
+        Set<String> allBranchNames = this.referenceStore.getAllBranchNames();
+        if (!allBranchNames.contains(branchName)) {
+            throw new GitletException("No such branch exists.");
+        }
+
+        // Error3: untracked file in the working directory
+        List<String> CWDFileNames = Utils.plainFilenamesIn(CWD);
+        String currCommitHash = this.referenceStore.parseHeadReference();
+        HashMap<String, String> currCommitFiles =
+                this.flattenCommitTree((Commit)this.objectStore.readObject(currCommitHash));
+        String branchCommitHash = this.referenceStore.parseReference(branchName);
+        HashMap<String, String> branchFiles =
+                this.flattenCommitTree((Commit)this.objectStore.readObject(branchCommitHash));
+
+        for (String fileName : CWDFileNames) {
+            if (!currCommitFiles.containsKey(fileName) && !branchFiles.containsKey(fileName)) {
+                throw new GitletException("There is an untracked file in the way; " +
+                        "delete it, or add and commit it first.");
+            }
+        }
+
+        // Overwrite CWD with checked out branch
+        for (String fileName : CWDFileNames) {
+            File file = Utils.join(CWD, fileName);
+            if (branchFiles.containsKey(fileName)) {
+                String contents = (String)this.objectStore.readObject(branchFiles.get(fileName));
+                Utils.writeContents(file, contents);
+            } else {
+                file.delete();
+            }
+        }
+
+        // Clear the stage
+        this.indexStore.updateIndex(currCommitFiles);
+
+        // Switch the current branch to the checked out branch
+        this.referenceStore.setHead(branchCommitHash);
+        return null;
+    }
+
     public String listFilesFromIndex() {
         this.checkRepoExists();
         StringBuilder sb = new StringBuilder();

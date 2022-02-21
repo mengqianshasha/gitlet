@@ -4,6 +4,10 @@ import edu.northeastern.gitlet.exception.GitletException;
 import edu.northeastern.gitlet.util.Utils;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class ReferenceStore {
     private static final File REFS_HEADS_DIR = Utils.join(Repository.GITLET_DIR, "refs", "heads");
@@ -52,4 +56,11 @@ public class ReferenceStore {
         return Utils.readContentsAsString(file).trim();
     }
 
+    public Set<String> getAllBranchNames() {
+        return new TreeSet<>(Utils.plainFilenamesIn(REFS_HEADS_DIR));
+    }
+
+    public void setHead(String branchHash) {
+        Utils.writeContents(HEAD_FILE, branchHash);
+    }
 }

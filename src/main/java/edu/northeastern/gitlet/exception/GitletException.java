@@ -1,7 +1,5 @@
 package edu.northeastern.gitlet.exception;
 
-import edu.northeastern.gitlet.command.GitletCommand;
-
 /** General exception indicating a Gitlet error.  For fatal errors, the
  *  result of .getMessage() is the error message to be printed.
  *  @author P. N. Hilfinger
