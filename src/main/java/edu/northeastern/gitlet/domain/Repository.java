@@ -13,6 +13,9 @@ import java.util.*;
 public class Repository {
     private static final File CWD = new File(System.getProperty("user.dir"));
     public static final File GITLET_DIR = Utils.join(CWD, ".gitlet");
+    private static final String ANSI_RED = "\u001B[31m";
+    private static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_RESET = "\u001B[0m";
 
     private ConfigStore configStore;
     private ObjectStore objectStore;
@@ -243,10 +246,10 @@ public class Repository {
                 fileName -> removedFiles.add(fileName),
                 fileName -> stagedFiles.add(fileName));
         sb.append("=== Staged Files ===\n");
-        stagedFiles.forEach(fileName -> sb.append(fileName).append("\n"));
+        stagedFiles.forEach(fileName -> sb.append(ANSI_GREEN).append(fileName).append(ANSI_RESET).append("\n"));
         sb.append("\n");
         sb.append("=== Removed Files ===\n");
-        removedFiles.forEach(fileName -> sb.append(fileName).append("\n"));
+        removedFiles.forEach(fileName -> sb.append(ANSI_GREEN).append(fileName).append(ANSI_RESET).append("\n"));
         sb.append("\n");
 
         // Unstaged & Untracked
@@ -268,11 +271,11 @@ public class Repository {
                 fileName -> deleted.add(fileName),
                 fileName -> modified.add(fileName));
         sb.append("=== Modifications Not Staged For Commit ===\n");
-        deleted.forEach(fileName -> sb.append(fileName).append(" (deleted)\n"));
-        modified.forEach(fileName -> sb.append(fileName).append(" (modified)\n"));
+        deleted.forEach(fileName -> sb.append(ANSI_RED).append(fileName).append(" (deleted)").append(ANSI_RESET).append("\n"));
+        modified.forEach(fileName -> sb.append(ANSI_RED).append(fileName).append(" (modified)").append(ANSI_RESET).append("\n"));
         sb.append("\n");
         sb.append("=== Untracked Files ===\n");
-        untracked.forEach(fileName -> sb.append(fileName).append("\n"));
+        untracked.forEach(fileName -> sb.append(ANSI_RED).append(fileName).append(ANSI_RESET).append("\n"));
         sb.append("\n");
         return sb.toString();
     }
