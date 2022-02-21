@@ -35,7 +35,7 @@ public class Repository {
         this.referenceStore.initReferenceStore(this.configStore.getConfigValue("init.defaultBranch"));
         this.configStore.initConfigStore();
         commit("initial commit");
-        return null;
+        return "Initialized empty Git repository in " + GITLET_DIR.getAbsolutePath();
     }
 
     public void updateConfig(File file, String propertyName, String propertyValue){
