@@ -129,13 +129,21 @@ public class Repository {
         StringBuilder sb = new StringBuilder();
         while (commitHash != null) {
             Commit commit = (Commit)this.objectStore.readObject(commitHash);
-            sb.append("===\n");
-            sb.append("commit ");
-            sb.append(commitHash + "\n");
-            sb.append("Date: " + commit.getTimestamp() + "\n");
-            sb.append(commit.getMessage() + "\n\n");
+            sb.append("===\n")
+                    .append("commit ")
+                    .append(commitHash)
+                    .append("\n")
+                    .append("Author: ")
+                    .append(commit.getAuthor())
+                    .append("\n")
+                    .append("Date: ")
+                    .append(commit.getTimestamp())
+                    .append("\n")
+                    .append(commit.getMessage())
+                    .append("\n\n");
             commitHash = commit.getParent();
         }
+
         return sb.toString();
     }
 
@@ -215,9 +223,11 @@ public class Repository {
                 sb.append("parent " + commit.getParent() + "\n");
             }
 
-            sb.append("author " + commit.getAuthor() + "\n");
-            sb.append("\n");
-            sb.append(commit.getMessage() + "\n");
+            sb.append("author ")
+                    .append(commit.getAuthor())
+                    .append("\n\n")
+                    .append(commit.getMessage())
+                    .append("\n");
             return sb.toString();
         } else {
             HashMap<String, TreeNode> files = (HashMap<String, TreeNode>) object;
