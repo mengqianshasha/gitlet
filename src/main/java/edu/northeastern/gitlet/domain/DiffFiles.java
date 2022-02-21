@@ -35,7 +35,7 @@ public class DiffFiles {
         }
     }
 
-    public void applyDiff(
+    public int[] applyDiff(
             Consumer<String> orphan1Action,
             Consumer<String> orphan2Action,
             Consumer<String> modifyAction) {
@@ -54,5 +54,11 @@ public class DiffFiles {
                 modifyAction.accept(filePath);
             }
         }
+
+        int[] result = new int[3];
+        result[0] = orphanFiles1.size();
+        result[1] = orphanFiles2.size();
+        result[2] = modifiedFiles.size();
+        return result;
     }
 }

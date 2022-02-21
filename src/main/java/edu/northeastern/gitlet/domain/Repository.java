@@ -69,6 +69,7 @@ public class Repository {
     public String commit(String comment) {
         Commit commit = null;
         File file = null;
+        StringBuilder sb = new StringBuilder();
 
         File defaultBranchFile = this.referenceStore
                 .getBranchFile(this.configStore.getConfigValue("init.defaultBranch"));
@@ -97,10 +98,18 @@ public class Repository {
             // Step2: update new commit according to the result of comparing
             HashMap<String, TreeNode> parentCommitTree = this.getCommitTreeFromCommit(parentCommit);
 
-            diffFiles.applyDiff(
-                    (filePath) -> this.insertToCommitTree(filePath, indexFiles.get(filePath), parentCommitTree),
-                    (filePath) -> this.removeFromCommitTree(filePath, parentCommitTree),
-                    (filePath) -> this.updateCommitTree(filePath, indexFiles.get(filePath), parentCommitTree));
+            int[] result = diffFiles.applyDiff(
+                    (filePath) -> {
+                        this.insertToCommitTree(filePath, indexFiles.get(filePath), parentCommitTree);;
+                    },
+                    (filePath) -> {
+                        this.removeFromCommitTree(filePath, parentCommitTree);
+                    },
+                    (filePath) -> {
+                        this.updateCommitTree(filePath, indexFiles.get(filePath), parentCommitTree);
+                    });
+
+            sb.append()
 
             // Step3: Construct new commit
             String treeHash = this.hashObject(ObjectType.tree, parentCommitTree);
@@ -110,6 +119,11 @@ public class Repository {
         }
 
         String commitHash = this.objectStore.hashObject(ObjectType.commit, commit);
+        if (sb.length() != 0){
+            sb.append("[").append(this.referenceStore.getCurrentBranchName()).append(" ").append(commitHash)
+            .append(commit.getMessage());
+        }
+
         Utils.writeContents(file, commitHash + "\n");
 
         return null;
