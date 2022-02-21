@@ -65,6 +65,9 @@ public class Gitlet {
             case "branch":
                 cmd = new BranchCommand(new Repository());
                 break;
+            case "rm-branch":
+                cmd = new RemoveBranchCommand(new Repository());
+                break;
             case "checkout":
                 cmd = new CheckoutCommand(new Repository());
                 break;
