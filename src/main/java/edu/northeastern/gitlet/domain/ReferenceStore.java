@@ -45,7 +45,7 @@ public class ReferenceStore {
         }else{
             file = Utils.join(REFS_HEADS_DIR, name);
             if (!file.exists()){
-                throw new GitletException("fatal: Not a valid object name" + name);
+                throw new GitletException("fatal: Not a valid object name " + name);
             }
         }
 
