@@ -15,6 +15,10 @@ public class ObjectStore {
     }
 
     public String hashObject(ObjectType objectType, Object o) {
+        return this.hashObject(objectType, o, true);
+    }
+
+    public String hashObject(ObjectType objectType, Object o, boolean writeToObjects) {
         if (!(o instanceof String) && !(o instanceof byte[]) && (o instanceof Serializable)) {
             o = Utils.serialize((Serializable) o);
         }
@@ -25,15 +29,18 @@ public class ObjectStore {
                 Integer.valueOf(Utils.getContentLength(o)).toString(),
                 "\u0000",
                 o);
-        File filePath = Utils.join(OBJECTS_DIR, objectHash.substring(0, 2), objectHash.substring(2));
-        if (!filePath.exists()) {
-            Utils.writeContents(
-                    filePath,
-                    objectType.name(),
-                    " ",
-                    Integer.valueOf(Utils.getContentLength(o)).toString(),
-                    "\u0000",
-                    o);
+
+        if (writeToObjects) {
+            File filePath = Utils.join(OBJECTS_DIR, objectHash.substring(0, 2), objectHash.substring(2));
+            if (!filePath.exists()) {
+                Utils.writeContents(
+                        filePath,
+                        objectType.name(),
+                        " ",
+                        Integer.valueOf(Utils.getContentLength(o)).toString(),
+                        "\u0000",
+                        o);
+            }
         }
 
         return objectHash;

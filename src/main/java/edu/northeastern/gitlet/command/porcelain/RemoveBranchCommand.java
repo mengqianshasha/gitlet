@@ -10,7 +10,7 @@ public class RemoveBranchCommand extends GitletCommand {
 
     @Override
     protected String doExecute(String[] operands) {
-        return null;
+        return this.getRepo().removeBranch(operands[0]);
     }
 
     @Override

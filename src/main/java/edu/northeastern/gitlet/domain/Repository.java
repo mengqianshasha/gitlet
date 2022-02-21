@@ -162,6 +162,47 @@ public class Repository {
         return null;
     }
 
+    public String removeBranch(String branchName) {
+        this.checkRepoExists();
+        File branchFile = this.referenceStore.getBranchFile(branchName);
+
+        // Error1: the branch does not exist
+        if (!branchFile.exists()) {
+            throw new GitletException("A branch with that name does not exist.");
+        }
+
+        // Error2: the branch for removal is current branch
+        if (this.referenceStore.getCurrentBranchName().equals(branchName)) {
+            throw new GitletException("Cannot remove the current branch.");
+        }
+
+        // Remove
+        branchFile.delete();
+        return null;
+    }
+
+    public String remove(String fileName) {
+        this.checkRepoExists();
+        File fileInCWD = Utils.join(CWD, fileName);
+
+        HashMap<String, String> indexFiles = this.indexStore.readIndex();
+        String commitHash = this.referenceStore.parseHeadReference();
+        Commit commit = (Commit)this.objectStore.readObject(commitHash);
+        HashMap<String, String> commitFiles = this.flattenCommitTree(commit);
+
+        // Error: the file for removal is neither staged nor tracked by the head commit
+        if (!commitFiles.containsKey(fileName)) {
+            if (!indexFiles.containsKey(fileName)) {
+                throw new GitletException("No reason to remove the file.");
+            }
+        } else {
+            fileInCWD.delete();
+        }
+        indexFiles.remove(fileName);
+        this.indexStore.updateIndex(indexFiles);
+        return null;
+    }
+
     public String listFilesFromIndex() {
         this.checkRepoExists();
         StringBuilder sb = new StringBuilder();

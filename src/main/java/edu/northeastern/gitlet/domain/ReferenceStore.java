@@ -27,6 +27,12 @@ public class ReferenceStore {
         return Utils.join(Repository.GITLET_DIR, head);
     }
 
+    public String getCurrentBranchName() {
+        String head = Utils.readContentsAsString(HEAD_FILE).trim();
+        String[] path = Utils.splitPath(head);
+        return path[path.length - 1];
+    }
+
     public File getBranchFile(String branchName){
         return Utils.join(REFS_HEADS_DIR, branchName);
     }
