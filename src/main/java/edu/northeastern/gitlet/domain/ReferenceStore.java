@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+/**
+ * The class to read and write .gitlet/refs folder
+ */
 public class ReferenceStore {
     private static final File REFS_HEADS_DIR = Utils.join(Repository.GITLET_DIR, "refs", "heads");
 

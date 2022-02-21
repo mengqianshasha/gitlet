@@ -3,6 +3,9 @@ package edu.northeastern.gitlet.command;
 import edu.northeastern.gitlet.domain.Repository;
 import edu.northeastern.gitlet.exception.GitletException;
 
+/**
+ * The abstract class for exposing a new git command
+ */
 public abstract class GitletCommand {
     private Repository repo;
     private int minNumOfOperands;

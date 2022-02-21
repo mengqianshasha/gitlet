@@ -9,6 +9,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+/***
+ * The class to provide configuration functionality for gitlet
+ */
 public class ConfigStore {
     public static final File CONFIG_FILE = Utils.join(Repository.GITLET_DIR, "config");
 
@@ -30,7 +33,7 @@ public class ConfigStore {
             properties.setProperty(propertyName, propertyValue);
             properties.store(new FileOutputStream(file), null);
         } catch (IOException e) {
-            throw GitletException.error(e.getMessage());
+            throw new GitletException(e.getMessage());
         }
     }
 
@@ -44,7 +47,7 @@ public class ConfigStore {
         try {
             properties.load(new FileInputStream(ConfigScope.Global.getConfigLocation()));
         } catch (IOException e) {
-            throw GitletException.error(e.getMessage());
+            throw new GitletException(e.getMessage());
         }
 
         try {

@@ -13,7 +13,9 @@ import java.util.Base64;
 import java.util.Formatter;
 import java.util.List;
 
-
+/**
+ * Common util class needed by gitlet
+ */
 public class Utils {
 
     static final int UID_LENGTH = 40;
@@ -162,7 +164,7 @@ public class Utils {
             // new String(byteArray, StandardCharsets.UTF_8)
             return Base64.getEncoder().encodeToString(stream.toByteArray()).getBytes(StandardCharsets.UTF_8);
         } catch (IOException excp) {
-            throw GitletException.error("Internal error serializing commit.");
+            throw new IllegalArgumentException(excp.getMessage());
         }
     }
 

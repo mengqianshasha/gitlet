@@ -6,6 +6,9 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 
+/***
+ * The class to read and write into .gitlet/objects storage
+ */
 public class ObjectStore {
 
     private static final File OBJECTS_DIR = Utils.join(Repository.GITLET_DIR, "objects");

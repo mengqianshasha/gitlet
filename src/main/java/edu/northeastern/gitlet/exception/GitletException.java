@@ -12,10 +12,6 @@ public class GitletException extends RuntimeException {
         this.showUsageMessage = showUsageMessage;
     }
 
-    public static GitletException error(String msg, Object... args) {
-        return new GitletException(String.format(msg, args));
-    }
-
     public boolean GetShowUsageMessage(){
         return showUsageMessage;
     }

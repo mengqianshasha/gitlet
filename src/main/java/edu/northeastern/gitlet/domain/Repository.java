@@ -7,9 +7,10 @@ import java.io.*;
 import java.time.Instant;
 import java.util.*;
 
-/** Represents a gitlet repository.*/
+/***
+ * The service class for handling different command
+ */
 public class Repository {
-
     private static final File CWD = new File(System.getProperty("user.dir"));
     public static final File GITLET_DIR = Utils.join(CWD, ".gitlet");
 

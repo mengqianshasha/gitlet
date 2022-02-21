@@ -5,6 +5,9 @@ import edu.northeastern.gitlet.util.Utils;
 import java.io.File;
 import java.util.HashMap;
 
+/**
+ * The class to read and write gitlet staging area
+ */
 public class IndexStore {
     private static final File INDEX_FILE = Utils.join(Repository.GITLET_DIR, "index");
 
