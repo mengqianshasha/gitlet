@@ -14,7 +14,8 @@ public class ReferenceStore {
 
     public void initReferenceStore(String defaultBranchName){
         REFS_HEADS_DIR.mkdirs();
-        Utils.writeContents(HEAD_FILE, "refs/heads/" + defaultBranchName + "\n");
+        Utils.writeContents(HEAD_FILE,
+                "refs" + File.separator + "heads" + File.separator + defaultBranchName + "\n");
     }
 
     public String parseHeadReference() {
