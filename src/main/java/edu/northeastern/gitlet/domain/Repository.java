@@ -4,7 +4,6 @@ import edu.northeastern.gitlet.exception.GitletException;
 import edu.northeastern.gitlet.util.Utils;
 import jdk.internal.org.jline.utils.DiffHelper;
 
-import java.awt.*;
 import java.io.*;
 import java.time.Instant;
 import java.util.*;
@@ -84,7 +83,7 @@ public class Repository {
 
     public String add(String filePath) {
         this.checkRepoExists();
-        HashMap<String, String> filesInIndex = this.getHashMapFromIndex();
+        HashMap<String, String> filesInIndex = this.readIndex();
 
         File file = Utils.join(CWD, filePath);
         if (file.exists()) {
@@ -123,7 +122,7 @@ public class Repository {
 
             // Step1: compare index and most recent commit
             HashMap<String, String> parentCommitFiles = this.flattenCommitTree(parentCommit);
-            HashMap<String, String> indexFiles = this.getHashMapFromIndex();
+            HashMap<String, String> indexFiles = this.readIndex();
         }
 
         String commitHash = this.hashObject(ObjectType.commit, commit);
@@ -171,7 +170,6 @@ public class Repository {
             sb.append("author " + commit.getAuthor() + "\n");
             sb.append("\n");
             sb.append(commit.getMessage() + "\n");
-
             return sb.toString();
         } else {
             HashMap<String, TreeNode> files = (HashMap<String, TreeNode>) object;
@@ -250,11 +248,12 @@ public class Repository {
         }
         HashMap<String, TreeNode> files = (HashMap<String, TreeNode>)this.readObject(treeHash);
 
-        Queue<TreeNode> queue = new LinkedList<TreeNode>();
+        Queue<TreeNode> queue = new LinkedList<>();
         for (TreeNode treeNode: files.values()) {
             treeNode.setFileName(Utils.join(CWD, treeNode.getFileName()).getAbsolutePath());
             queue.add(treeNode);
         }
+
         while (!queue.isEmpty()) {
             TreeNode treeNode = queue.poll();
             if (treeNode.getNodeType() == TreeNodeType.blob) {
@@ -267,6 +266,7 @@ public class Repository {
                 }
             }
         }
+
         return result;
     }
 
@@ -291,7 +291,7 @@ public class Repository {
         return null;
     }
 
-    private HashMap<String, String> getHashMapFromIndex() {
+    private HashMap<String, String> readIndex() {
         if (!INDEX_FILE.exists()) {
             return new HashMap<String, String>();
         }
