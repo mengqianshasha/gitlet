@@ -62,7 +62,6 @@ public class Repository {
     }
 
     public void updateConfig(File file, String propertyName, String propertyValue){
-
         Properties properties = new Properties();
         try {
             properties.load(new FileInputStream(file));
@@ -73,7 +72,7 @@ public class Repository {
         }
     }
 
-    public String listConfig(){
+    public String listConfigs(){
         Properties properties = this.loadConfigs();
         StringBuilder sb = new StringBuilder();
         properties.forEach((x, y) -> sb.append(x).append("=").append(y).append("\n"));

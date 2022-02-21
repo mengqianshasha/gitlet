@@ -17,7 +17,7 @@ public class ConfigCommand extends GitletCommand {
         String propertyValue = null;
         if (operands.length == 1){
             if (operands[0].equals("--list")) {
-                return this.getRepo().listConfig();
+                return this.getRepo().listConfigs();
             }else{
                 throw new GitletException("error: unknown switch " + operands[0], true);
             }
