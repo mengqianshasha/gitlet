@@ -58,6 +58,15 @@ public class ObjectStore {
         return null;
     }
 
+    public String readFileSize(String operand) {
+        File file = Utils.join(OBJECTS_DIR, operand.substring(0, 2), operand.substring(2));
+        if (file.exists()) {
+            return Utils.readContentsAsString(file).split("\u0000")[0].split(" ")[1];
+        }
+
+        return null;
+    }
+
     public Object readObject(String hash) {
         File file = Utils.join(OBJECTS_DIR, hash.substring(0, 2), hash.substring(2));
 

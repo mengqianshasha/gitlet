@@ -19,6 +19,8 @@ public class CatFileCommand extends GitletCommand {
                 return this.getRepo().readFile(hash);
             case "-t":
                 return this.getRepo().readFileType(hash);
+            case "-s":
+                return this.getRepo().readFileSize(hash);
             default:
                 throw new GitletException("error: unknown switch " + type, true);
         }

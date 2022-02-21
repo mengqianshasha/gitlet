@@ -444,6 +444,11 @@ public class Repository {
         return this.readFileTypeWithReferenceParsing(hash);
     }
 
+    public String readFileSize(String hash) {
+        this.checkRepoExists();
+        return this.readFileSizeWithReferenceParsing(hash);
+    }
+
     public String hashObject(ObjectType objectType, Object o) {
         this.checkRepoExists();
         return this.objectStore.hashObject(objectType, o);
@@ -524,6 +529,15 @@ public class Repository {
         String fileType = this.objectStore.readFileType(hash);
         if (fileType == null){
             fileType = this.objectStore.readFileType(this.referenceStore.parseReference(hash));
+        }
+
+        return fileType;
+    }
+
+    private String readFileSizeWithReferenceParsing(String hash){
+        String fileType = this.objectStore.readFileSize(hash);
+        if (fileType == null){
+            fileType = this.objectStore.readFileSize(this.referenceStore.parseReference(hash));
         }
 
         return fileType;
