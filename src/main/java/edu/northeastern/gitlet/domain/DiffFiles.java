@@ -1,8 +1,6 @@
 package edu.northeastern.gitlet.domain;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 
@@ -19,14 +17,13 @@ public class DiffFiles {
 
     public void findDiffFiles(HashMap<String, String> area1, HashMap<String, String> area2) {
         for (String filePath : area1.keySet()) {
-            // file in both area1 and area2
             if (area2.containsKey(filePath)) {
+                // file in both area1 and area2
                 if (!area1.get(filePath).equals(area2.get(filePath))) {
                     this.modifiedFiles.add(filePath);
                 }
-            }
-            // file only in area1
-            else {
+            } else {
+                // file only in area1
                 this.orphanFiles1.add(filePath);
             }
         }

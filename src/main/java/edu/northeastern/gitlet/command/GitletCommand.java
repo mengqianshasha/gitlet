@@ -27,12 +27,6 @@ public abstract class GitletCommand {
 
     public abstract String getUsageMessage();
 
-    /**
-     * Helper method: validate the number of operands in the arguments provided by the user
-     * If a user inputs a command with the wrong number or format of operands,
-     * print the message "Incorrect operands." and exit.
-     * @param args The arguments provided by the user in the command line
-     */
     protected void validateNumOperands(String[] args) {
         if (args.length > this.maxNumOfOperands || args.length < this.minNumOfOperands) {
             throw new GitletException("Incorrect operands.");

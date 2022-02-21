@@ -10,7 +10,7 @@ public class ResetCommand extends GitletCommand {
 
     @Override
     protected String doExecute(String[] operands) {
-        return null;
+        return this.getRepo().reset(operands[0]);
     }
 
     @Override

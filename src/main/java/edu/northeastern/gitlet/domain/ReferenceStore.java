@@ -18,8 +18,7 @@ public class ReferenceStore {
 
     public void initReferenceStore(String defaultBranchName){
         REFS_HEADS_DIR.mkdirs();
-        Utils.writeContents(HEAD_FILE,
-                "refs" + File.separator + "heads" + File.separator + defaultBranchName + "\n");
+        this.setHead(defaultBranchName);
     }
 
     public String parseHeadReference() {
@@ -60,7 +59,8 @@ public class ReferenceStore {
         return new TreeSet<>(Utils.plainFilenamesIn(REFS_HEADS_DIR));
     }
 
-    public void setHead(String branchHash) {
-        Utils.writeContents(HEAD_FILE, branchHash);
+    public void setHead(String branchName) {
+        Utils.writeContents(HEAD_FILE,
+                "refs" + File.separator + "heads" + File.separator + branchName + "\n");
     }
 }

@@ -84,9 +84,6 @@ public class Gitlet {
             case "log":
                 cmd = new LogCommand(new Repository());
                 break;
-            case "merge":
-                cmd = new MergeCommand(new Repository());
-                break;
             case "rm":
                 cmd = new RemoveCommand(new Repository());
                 break;

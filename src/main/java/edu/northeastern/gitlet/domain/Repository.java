@@ -7,17 +7,8 @@ import java.io.*;
 import java.time.Instant;
 import java.util.*;
 
-/** Represents a gitlet repository.
- *  does at a high level.
- *
- *  @author TODO
- */
+/** Represents a gitlet repository.*/
 public class Repository {
-    /**
-     * List all instance variables of the Repository class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided two examples for you.
-     */
 
     private static final File CWD = new File(System.getProperty("user.dir"));
     public static final File GITLET_DIR = Utils.join(CWD, ".gitlet");
@@ -310,43 +301,37 @@ public class Repository {
         }
 
         // Error2: no such branch
-        Set<String> allBranchNames = this.referenceStore.getAllBranchNames();
-        if (!allBranchNames.contains(branchName)) {
-            throw new GitletException("No such branch exists.");
-        }
+        this.validateBranchName(branchName);
 
         // Error3: untracked file in the working directory
-        List<String> CWDFileNames = Utils.plainFilenamesIn(CWD);
-        String currCommitHash = this.referenceStore.parseHeadReference();
-        HashMap<String, String> currCommitFiles =
-                this.flattenCommitTree((Commit)this.objectStore.readObject(currCommitHash));
-        String branchCommitHash = this.referenceStore.parseReference(branchName);
-        HashMap<String, String> branchFiles =
-                this.flattenCommitTree((Commit)this.objectStore.readObject(branchCommitHash));
-
-        for (String fileName : CWDFileNames) {
-            if (!currCommitFiles.containsKey(fileName) && !branchFiles.containsKey(fileName)) {
-                throw new GitletException("There is an untracked file in the way; " +
-                        "delete it, or add and commit it first.");
-            }
-        }
+        this.checkUntrackedFilesWithBranchName(branchName);
 
         // Overwrite CWD with checked out branch
-        for (String fileName : CWDFileNames) {
-            File file = Utils.join(CWD, fileName);
-            if (branchFiles.containsKey(fileName)) {
-                String contents = (String)this.objectStore.readObject(branchFiles.get(fileName));
-                Utils.writeContents(file, contents);
-            } else {
-                file.delete();
-            }
-        }
+        this.overwriteCWD(branchName);
 
         // Clear the stage
-        this.indexStore.updateIndex(currCommitFiles);
+        HashMap<String, String> branchFiles = this.flattenBranchTree(branchName);
+        this.indexStore.updateIndex(branchFiles);
 
         // Switch the current branch to the checked out branch
-        this.referenceStore.setHead(branchCommitHash);
+        this.referenceStore.setHead(branchName);
+        return null;
+    }
+
+    public String reset(String commitHash) {
+        this.checkRepoExists();
+        this.validateCommitHash(commitHash);
+        this.checkUntrackedFilesWithCommitHash(commitHash);
+        this.overwriteCWDWithCommitHash(commitHash);
+
+        // Clear the stage
+        HashMap<String, String> commitFiles = this.flattenCommitTree(commitHash);
+        this.indexStore.updateIndex(commitFiles);
+
+        // Move the current branch's head to that commit
+        File currBranchFile = this.referenceStore.getBranchFile(this.referenceStore.getCurrentBranchName());
+        Utils.writeContents(currBranchFile, commitHash);
+
         return null;
     }
 
@@ -438,6 +423,77 @@ public class Repository {
         return this.objectStore.hashObject(objectType, o);
     }
 
+    private void checkUntrackedFilesWithCommitHash(String commitHash) {
+        Commit commit = (Commit)this.objectStore.readObject(commitHash);
+        this.checkUntrackedFiles(commit);
+    }
+    private void validateCommitHash(String commitHash) {
+        Commit commit = (Commit)this.objectStore.readObject(commitHash);
+        if (commit == null) {
+            throw new GitletException("No commit with that id exists.");
+        }
+    }
+
+    private void validateBranchName(String branchName) {
+        Set<String> allBranchNames = this.referenceStore.getAllBranchNames();
+        if (!allBranchNames.contains(branchName)) {
+            throw new GitletException("No such branch exists");
+        }
+    }
+
+    private void checkUntrackedFiles(Commit commit) {
+        List<String> CWDFileNames = Utils.plainFilenamesIn(CWD);
+        HashMap<String, String> currCommitFiles = this.flattenBranchTree(this.referenceStore.getCurrentBranchName());
+        HashMap<String, String> targetCommitFiles = this.flattenCommitTree(commit);
+
+        for (String fileName : CWDFileNames) {
+            File file = Utils.join(CWD, fileName);
+            String fileHash = this.objectStore.hashObject(ObjectType.blob,
+                    Utils.readContentsAsString(file),
+                    false);
+            if (!currCommitFiles.containsKey(fileName) &&
+                    (!targetCommitFiles.containsKey(fileName) ||
+                            !fileHash.equals(targetCommitFiles.get(fileName)))) {
+                throw new GitletException("There is an untracked file in the way; " +
+                        "delete it, or add and commit it first.");
+            }
+        }
+    }
+
+    private void checkUntrackedFilesWithBranchName(String branchName) {
+        String branchCommitHash = this.referenceStore.parseReference(branchName);
+        Commit commit = (Commit)this.objectStore.readObject(branchCommitHash);
+        this.checkUntrackedFiles(commit);
+    }
+
+    private void overwriteCWDWithCommitHash(String commitHash) {
+        List<String> CWDFileNames = Utils.plainFilenamesIn(CWD);
+        HashMap<String, String> targetCommitFiles = this.flattenCommitTree(commitHash);
+
+        for (String fileName : CWDFileNames) {
+            File file = Utils.join(CWD, fileName);
+            if (!targetCommitFiles.containsKey(fileName)) {
+                file.delete();
+            }
+        }
+        for (String fileName : targetCommitFiles.keySet()) {
+            File file = Utils.join(CWD, fileName);
+            if (!CWDFileNames.contains(fileName)) {
+                try {
+                    file.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            Utils.writeContents(file, (String)this.objectStore.readObject(targetCommitFiles.get(fileName)));
+        }
+    }
+
+    private void overwriteCWD(String branchName) {
+        String branchCommitHash = this.referenceStore.parseReference(branchName);
+        this.overwriteCWDWithCommitHash(branchCommitHash);
+    }
+
     private String readFileTypeWithReferenceParsing(String hash){
         String fileType = this.objectStore.readFileType(hash);
         if (fileType == null){
@@ -507,6 +563,19 @@ public class Repository {
         }
 
         return result;
+    }
+
+    private HashMap<String, String> flattenCommitTree(String commitHash) {
+        Commit commit = (Commit)this.objectStore.readObject(commitHash);
+        if (commit == null) {
+            throw new GitletException("No commit with that id exists.");
+        }
+        return this.flattenCommitTree(commit);
+    }
+
+    private HashMap<String, String> flattenBranchTree(String branchName) {
+        String branchCommitHash = this.referenceStore.parseReference(branchName);
+        return this.flattenCommitTree(branchCommitHash);
     }
 
     private boolean exists() {
