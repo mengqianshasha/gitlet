@@ -36,7 +36,8 @@ public class ConfigCommand extends GitletCommand {
             propertyValue = operands[2];
         }
 
-        return this.getRepo().config(scope.getConfigLocation(), propertyName, propertyValue);
+        this.getRepo().updateConfig(scope.getConfigLocation(), propertyName, propertyValue);
+        return null;
     }
 
     @Override
