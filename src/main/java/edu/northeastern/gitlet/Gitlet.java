@@ -8,7 +8,6 @@ import edu.northeastern.gitlet.command.plumbing.ListTreeCommand;
 import edu.northeastern.gitlet.command.porcelain.*;
 import edu.northeastern.gitlet.domain.Repository;
 import edu.northeastern.gitlet.exception.GitletException;
-import net.sf.saxon.expr.Component;
 
 import java.util.Arrays;
 
