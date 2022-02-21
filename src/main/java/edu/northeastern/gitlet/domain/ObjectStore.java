@@ -67,7 +67,7 @@ public class ObjectStore {
 
             switch (objectType){
                 case blob:
-                    return parts[1];
+                    return parts.length == 1 ? "" : parts[1];
                 case commit:
                     Commit commit = Utils.deserialize(parts[1], Commit.class);
                     return commit;

@@ -35,7 +35,7 @@ public class DiffFiles {
         }
     }
 
-    public int[] applyDiff(
+    public TreeSet<String>[] applyDiff(
             Consumer<String> orphan1Action,
             Consumer<String> orphan2Action,
             Consumer<String> modifyAction) {
@@ -55,10 +55,10 @@ public class DiffFiles {
             }
         }
 
-        int[] result = new int[3];
-        result[0] = orphanFiles1.size();
-        result[1] = orphanFiles2.size();
-        result[2] = modifiedFiles.size();
+        TreeSet<String>[] result = new TreeSet[3];
+        result[0] = orphanFiles1;
+        result[1] = orphanFiles2;
+        result[2] = modifiedFiles;
         return result;
     }
 }

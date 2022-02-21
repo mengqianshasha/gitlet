@@ -70,6 +70,7 @@ public class Repository {
         Commit commit = null;
         File file = null;
         StringBuilder sb = new StringBuilder();
+        TreeSet<String>[] result = null;
 
         File defaultBranchFile = this.referenceStore
                 .getBranchFile(this.configStore.getConfigValue("init.defaultBranch"));
@@ -98,7 +99,7 @@ public class Repository {
             // Step2: update new commit according to the result of comparing
             HashMap<String, TreeNode> parentCommitTree = this.getCommitTreeFromCommit(parentCommit);
 
-            int[] result = diffFiles.applyDiff(
+            result = diffFiles.applyDiff(
                     (filePath) -> {
                         this.insertToCommitTree(filePath, indexFiles.get(filePath), parentCommitTree);;
                     },
@@ -109,8 +110,6 @@ public class Repository {
                         this.updateCommitTree(filePath, indexFiles.get(filePath), parentCommitTree);
                     });
 
-            sb.append()
-
             // Step3: Construct new commit
             String treeHash = this.hashObject(ObjectType.tree, parentCommitTree);
             commit = new Commit(comment, Instant.now().toString(), parentHash, treeHash, this.getAuthor());
@@ -119,14 +118,23 @@ public class Repository {
         }
 
         String commitHash = this.objectStore.hashObject(ObjectType.commit, commit);
-        if (sb.length() != 0){
+        if (result != null){
             sb.append("[").append(this.referenceStore.getCurrentBranchName()).append(" ").append(commitHash)
-            .append(commit.getMessage());
+                    .append("] ").append(commit.getMessage()).append("\n");
+            int size = result[0].size() + result[1].size() + result[2].size();
+            if (size > 1) {
+                sb.append(size).append(" files changed").append("\n");
+            }else{
+                sb.append(size).append(" file changed").append("\n");
+            }
+
+            result[0].forEach(entry -> sb.append("created ").append(entry).append("\n"));
+            result[1].forEach(entry -> sb.append("deleted ").append(entry).append("\n"));
         }
 
         Utils.writeContents(file, commitHash + "\n");
 
-        return null;
+        return sb.length() == 0 ? null : sb.toString();
     }
 
     public String log() {
@@ -303,7 +311,7 @@ public class Repository {
 
         String contentsInFile = (String)this.objectStore.readObject(commitFiles.get(fileName));
         Utils.writeContents(file, contentsInFile);
-        return null;
+        return "Updated 1 path from " + commitHash;
     }
 
     public String checkoutBranch(String branchName) {
@@ -312,7 +320,7 @@ public class Repository {
         // Error1: no need to checkout current branch
         String currBranchName = this.referenceStore.getCurrentBranchName();
         if (branchName.equals(currBranchName)) {
-            throw new GitletException("No need to checkout the current branch");
+            throw new GitletException("Already on `" + branchName + "`");
         }
 
         // Error2: no such branch
@@ -330,7 +338,7 @@ public class Repository {
 
         // Switch the current branch to the checked out branch
         this.referenceStore.setHead(branchName);
-        return null;
+        return "Switched to branch `" + branchName + "`";
     }
 
     public String reset(String commitHash) {
