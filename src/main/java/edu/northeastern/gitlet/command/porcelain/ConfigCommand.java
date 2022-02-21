@@ -7,7 +7,7 @@ import edu.northeastern.gitlet.exception.GitletException;
 
 public class ConfigCommand extends GitletCommand {
     public ConfigCommand(Repository repo) {
-        super(repo, 2, 3);
+        super(repo, 1, 3);
     }
 
     @Override
@@ -15,17 +15,20 @@ public class ConfigCommand extends GitletCommand {
         ConfigScope scope = null;
         String propertyName = null;
         String propertyValue = null;
-        if (operands.length == 2){
+        if (operands.length == 1){
+            if (operands[0].equals("--list")) {
+                return this.getRepo().listConfig();
+            }else{
+                throw new GitletException("error: unknown switch " + operands[0], true);
+            }
+        } else if(operands.length == 2) {
             scope = ConfigScope.Repo;
             propertyName = operands[0];
             propertyValue = operands[1];
-        } else if (operands.length == 3){
+        } else if (operands.length == 3) {
             if (operands[0].equals("--global")){
                 scope = ConfigScope.Global;
-            }else if (operands[0].equals("--list")){
-                return this.getRepo().listConfig();
-            }
-            else{
+            } else{
                 throw new GitletException("error: unknown switch " + operands[0], true);
             }
 
