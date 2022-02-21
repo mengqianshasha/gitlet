@@ -295,6 +295,12 @@ public class Repository {
 
     private Object readObject(String hash) {
         File file = Utils.join(OBJECTS_DIR, hash.substring(0, 2), hash.substring(2));
+
+        if (!file.exists()){
+            hash = this.parseReference(hash);
+            file = Utils.join(OBJECTS_DIR, hash.substring(0, 2), hash.substring(2));
+        }
+
         if (file.exists()) {
             String[] parts = Utils.readContentsAsString(file).split("\u0000");
             ObjectType objectType = ObjectType.valueOf(parts[0].split(" ")[0]);
