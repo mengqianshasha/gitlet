@@ -10,7 +10,7 @@ public class ListTreeCommand extends GitletCommand {
 
     @Override
     protected String doExecute(String[] operands) {
-        return null;
+        return this.getRepo().listTree(operands[0]);
     }
 
     @Override

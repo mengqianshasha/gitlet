@@ -150,6 +150,30 @@ public class Repository {
         return sb.length() == 0 ? null : sb.toString();
     }
 
+    public String listTree(String hash) {
+        this.checkRepoExists();
+        Object object = this.readObject(hash);
+
+        if (object instanceof String){
+            throw new GitletException("fatal: not a tree object");
+        }
+
+        HashMap<String, TreeNode> result = null;
+        if (object instanceof Commit){
+            result = (HashMap<String, TreeNode>)this.readObject(((Commit)object).getTree());
+        }else{
+            result = (HashMap<String, TreeNode>)object;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        result.values().forEach((entry) -> {
+            sb.append(entry.getNodeType()).append(" ")
+                    .append(entry.getHash()).append("  ").append(entry.getFileName()).append("\n");
+        });
+
+        return sb.toString();
+    }
+
     public String readFile(String hash) {
         this.checkRepoExists();
         Object object = this.readObject(hash);
