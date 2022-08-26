@@ -18,6 +18,7 @@ public class Gitlet {
         // If a user doesn't input any arguments, print the message "Please enter a command." and exit.
         if (args.length == 0) {
             System.out.println("Please enter a command");
+            System.exit(1);
         }
 
         String firstArg = args[0];
